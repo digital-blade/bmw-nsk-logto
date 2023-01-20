@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json.schemastore.org/package",
+  "name": "@evist0/connector-smsaero-sms",
+  "version": "1.0.0-beta.19",
+  "description": "SMSAero connector implementation."
+}

@@ -1,0 +1,70 @@
+name: 'Deploy production'
+
+on:
+  push:
+    tags: [ v*.*.* ]
+
+concurrency:
+  group: 'deploy-prod'
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: 'Deploy production'
+    environment:
+      name: production
+      url: https://logto.bmw-nsk.ru
+    runs-on: [ self-hosted ]
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+
+      - name: 'Docker meta'
+        uses: docker/metadata-action@v4
+        id: meta
+        with:
+          images: ${{ vars.BMW_NSK_DOCKER_REGISTRY }}/bmw-nsk-logto
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=latest
+
+      - name: 'Set up Docker Buildx'
+        uses: docker/setup-buildx-action@v2
+
+      - name: 'Login to registry'
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ vars.BMW_NSK_DOCKER_REGISTRY }}
+          username: ${{ secrets.BMW_NSK_DOCKER_USERNAME }}
+          password: ${{ secrets.BMW_NSK_DOCKER_PASSWORD }}
+
+      - name: 'Build and push'
+        uses: docker/build-push-action@v3.3.1
+        id: build-push
+        with:
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ vars.BMW_NSK_DOCKER_REGISTRY }}/bmw-nsk-logto:buildcache
+          cache-to: type=registry,ref=${{ vars.BMW_NSK_DOCKER_REGISTRY }}/bmw-nsk-logto:buildcache,mode=max
+
+  notify:
+    name: 'Create release'
+    runs-on: [ self-hosted ]
+    needs: [ deploy ]
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v3
+
+      - name: 'Update CHANGELOG'
+        id: changelog
+        uses: requarks/changelog-action@v1
+        with:
+          token: ${{ github.token }}
+          tag: ${{ github.ref_name }}
+
+      - name: 'Create Release'
+        uses: ncipollo/release-action@v1
+        id: create-release
+        with:
+          body: ${{ steps.changelog.outputs.changes }}

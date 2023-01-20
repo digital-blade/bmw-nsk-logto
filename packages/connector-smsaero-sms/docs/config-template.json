@@ -1,0 +1,27 @@
+{
+  "email": "<account-email>",
+  "apiKey": "<api-key>",
+  "senderName": "<sender-name>",
+  "templates": [
+    {
+      "usageType": "SignIn",
+      "content": "Ваш код для входа: {{code}}."
+    },
+    {
+      "usageType": "Register",
+      "content": "Ваш код для регистрации: {{code}}."
+    },
+    {
+      "usageType": "ForgotPassword",
+      "content": "Ваш код для сброса пароля: {{code}}."
+    },
+    {
+      "usageType": "Generic",
+      "content": "Ваш код: {{code}}"
+    },
+    {
+      "usageType": "Test",
+      "content": "Это тестовое смс. Ваш код: {{code}}."
+    }
+  ]
+}
